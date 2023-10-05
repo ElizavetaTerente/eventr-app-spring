@@ -1,0 +1,460 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3c.org/1999/xhtml" xmlns:f="http://java.sun.com/jsf/core" xmlns:h="http://java.sun.com/jsf/html" xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:ng="http://xmlns.jcp.org/jsf/passthrough" xmlns:p="http://primefaces.org/ui"
+    xmlns:o="http://omnifaces.org/ui" template="/WEB-INF/templates/main.xhtml">
+
+    <ui:define name="content">
+        <div id="div1">
+            <p:growl id="msgs" showDetail="true" skipDetailIfEqualsSummary="true" />
+            <h:form id="votingListForm">
+
+                <p:dataTable id="votingListTable" var="voting" value="#{votingListController.getUserSpecificVotings()}" widgetVar="votingListTable" emptyMessage="No running votings found with given criteria">
+
+                    <f:facet name="header">
+                        <p:commandButton value="New Voting" update=":wizardDialogForm" oncomplete="PF('wizardDialog').show()" />
+                    </f:facet>
+
+                    <p:column headerText="Event-Name">
+                        <h:outputText value="#{voting.name}" />
+                    </p:column>
+
+                    <p:column headerText="Invited Users">
+                        <ui:repeat value="#{voting.participants}" var="participant">
+                            <p:tag styleClass="p-mr-2" value="#{participant.username}" rounded="true"></p:tag>
+                        </ui:repeat>
+                    </p:column>
+
+                    <p:column headerText="Restaurants">
+                        <ui:repeat value="#{voting.possibilities}" var="possibility">
+                            <p:tag styleClass="p-mr-2" value="#{possibility.name}" rounded="true"></p:tag>
+                        </ui:repeat>
+                    </p:column>
+
+                    <p:column headerText="Vote">
+                        <p:commandButton process="votingListForm" value="Vote" update=":votingDialog" oncomplete="PF('votingDialog').show()" actionListener="#{votingDetailController.setVoting(voting)}" />
+                    </p:column>
+
+                    <p:column headerText="Invite Users">
+                        <p:commandButton rendered="#{voting.createUser == sessionInfoBean.currentUser}" process="votingListForm" value="Invite" update=":inviteDialog" oncomplete="PF( 'inviteTable' ).unselectAllRows(); PF('inviteDialog').show()" actionListener="#{votingDetailController.setVoting(voting)}"
+                        />
+                    </p:column>
+
+                    <p:column headerText="Sign Out">
+                        <p:commandButton process="votingListForm" rendered="#{voting.createUser != sessionInfoBean.currentUser}" value="sign out" action="#{votingDetailController.signOut()}" update=":votingListForm" actionListener="#{votingDetailController.setVoting(voting)}">
+                            <p:confirm header="Confirmation" message="Are you sure that you want to leave this voting? You'd have to be invited by the creator again to rejoin." icon="pi pi-exclamation-triangle" />
+                        </p:commandButton>
+                    </p:column>
+
+                    <p:column headerText="Pre-End Voting">
+                        <p:commandButton process="votingListForm" rendered="#{voting.createUser == sessionInfoBean.currentUser}" value="end" action="#{votingDetailController.endVoting(voting)}" update=":votingListForm" actionListener="#{votingDetailController.setVoting(voting)}">
+                            <p:confirm header="Confirmation" message="Are you sure that you want to end this voting early? You cannot undo this. A Event will immediately be created afterwards." icon="pi pi-exclamation-triangle" />
+                        </p:commandButton>
+                    </p:column>
+
+                    <p:column headerText="Cancel">
+                        <p:commandButton process="votingListForm" rendered="#{voting.createUser == sessionInfoBean.currentUser}" value="cancel" action="#{votingDetailController.cancel()}" update=":votingListForm" actionListener="#{votingDetailController.setVoting(voting)}">
+                            <p:confirm header="Confirmation" message="Are you sure that you want to cancel this voting early? You cannot undo this" icon="pi pi-exclamation-triangle" />
+                        </p:commandButton>
+                    </p:column>
+
+                </p:dataTable>
+            </h:form>
+        </div>
+
+        <p:dialog header="Select Restaurants" id="wizardDialog" widgetVar="wizardDialog" modal="true" width="80%" height="80vh" showEffect="fade" hideEffect="fade">
+            <h:form id="wizardDialogForm">
+                <div class="card">
+
+                    <p:wizard widgetVar="wizard">
+
+                        <p:tab id="tab0" title="When">
+
+                            <p:commandButton value="help" icon="pi pi-info-circle" action="#{votingWizard.showInfo()}" styleClass=" ui-button-outlined " />
+
+                            <style type="text/css">
+                                .mystyle .ui-datatable-empty-message {
+                                    color: red !important;
+                                }
+                            </style>
+
+                            <p:dataTable id="timeslotsTable" var="timeslot" value="#{votingWizard.timeslots}" widgetVar="timeslotsTable" emptyMessage="Please provide at least one timeslot" styleClass="mystyle">
+
+                                <f:facet name="header">
+                                    <p:commandButton value="Add Timeslot" action="#{votingWizard.addTimeslot()}" update=":wizardDialogForm:timeslotsTable" />
+                                    <p>&nbsp;&nbsp;&nbsp;&nbsp;</p>
+                                    <p:outputLabel for="start" value="start:&nbsp;&nbsp;&nbsp;" />
+                                    <p:datePicker id="start" value="#{votingWizard.timeslotStart}" mindate="#{votingWizard.eventEarlyMin()}" showTime="true" />
+                                    <p:outputLabel for="end" value="&nbsp;&nbsp;hours:&nbsp;&nbsp;&nbsp;" />
+                                    <p:inputText id="end" value="#{votingWizard.timeslotSlider}" />
+                                    <p>&nbsp;&nbsp;&nbsp;&nbsp;</p>
+                                    <p:slider for="end" minValue="1" maxValue="12" />
+                                </f:facet>
+
+                                <p:column headerText="From">
+                                    <h:outputText value="#{timeslot.startString()}" />
+                                </p:column>
+
+                                <p:column headerText="To">
+                                    <h:outputText value="#{timeslot.endString()}" />
+                                </p:column>
+
+                                <p:column headerText="Delete">
+                                    <p:commandButton process="wizardDialogForm" value="Delete" action="#{votingWizard.deleteTimeslot(timeslot)}" update=":wizardDialogForm:timeslotsTable" />
+                                </p:column>
+
+                            </p:dataTable>
+
+                        </p:tab>
+
+                        <p:tab title="Where">
+
+                            <p:commandButton value="help" icon="pi pi-info-circle" action="#{votingWizard.showInfo()}" styleClass=" ui-button-outlined " />
+
+                            <p:dataTable id="locationTable" widgetVar="locationTable" var="location" value="#{locationListController.getLocationsFilterdByTimslots(votingWizard.timeslots)}" filteredValue="#{locationListController.filteredLocations}" selection="#{votingWizard.selectedLocations}"
+                                rowKey="#{location.name}" emptyMessage="Keine Restaurants gefunden">
+
+                                <p:column id="name" headerText="Name" filterBy="#{location.name}" filterMatchMode="contains">
+                                    <h:outputText value="#{location.name}" />
+                                </p:column>
+
+                                <p:column headerText="Tags" filterBy="#{location.tags}" filterFunction="#{tagFilterBean.filterByTag}">
+                                    <ui:repeat value="#{location.tags}" var="tag">
+                                        <p:tag styleClass="p-mr-2" value="#{tag.name}" rounded="true"></p:tag>
+                                    </ui:repeat>
+                                </p:column>
+
+                                <p:column id="open" headerText="Opening Hours" filterBy="#{location.openingHours}" filterFunction="#{timeFilterBean.filterOpenTime}">
+
+                                    <f:facet id="openFacet" name="filter">
+                                        <p:datePicker value="#{timeFilterBean.start}" onchange="PF('locationTable').filter()" pattern="dd/MM/yyyy  HH:mm" stepMinute="15" />
+                                    </f:facet>
+
+                                    <ui:repeat value="#{location.openingHours}" var="openingHour">
+                                        <p:outputPanel rendered="#{openingHour.opened}">
+                                            <strong>
+                                                <h:outputText value="#{openingHour.weekday}: " />
+                                            </strong>
+                                            <h:outputText value="#{openingHour.open} - " />
+                                            <h:outputText value="#{openingHour.close}" /><br />
+                                        </p:outputPanel>
+                                    </ui:repeat>
+
+                                </p:column>
+
+                                <p:column id="close" headerText="until" filterBy="#{location.openingHours}" filterFunction="#{timeFilterBean.filterCloseTime}" filterStyle="hidden">
+                                    <f:facet name="filter">
+                                        <p:datePicker value="#{timeFilterBean.end}" onchange="PF('locationTable').filter()" pattern="HH:mm" stepMinute="15" />
+                                    </f:facet>
+                                </p:column>
+
+                                <p:column headerText="Menu">
+                                    <h:outputLink value="#{location.url}">View the menu</h:outputLink>
+                                </p:column>
+
+                                <p:column headerText="Map" style="width:100px;text-align: center">
+                                    <p:commandButton update=":locationShowMap" oncomplete="PF('locationShowMap').show()" icon="pi pi-map-marker">
+                                        <f:setPropertyActionListener value="#{location}" target="#{locationDetailController.location}" />
+                                    </p:commandButton>
+                                </p:column>
+
+                                <p:column selectionMode="multiple" />
+
+                            </p:dataTable>
+
+                            <script>
+                                PF('locationTable').filter();
+                                PF('locationTable').unselectAllRows();
+                            </script>
+
+                        </p:tab>
+
+                        <p:tab id="name" title="Name">
+
+                            <p:commandButton value="help" icon="pi pi-info-circle" action="#{votingWizard.showInfo()}" styleClass=" ui-button-outlined " />
+
+                            <p:panel header="Your Events Name">
+                                <f:facet name="header">
+                                    Your Events name:
+                                    <p:inputText value="#{votingWizard.name}">
+                                        <p:autoUpdate />
+                                    </p:inputText>
+                                </f:facet>
+                            </p:panel>
+                        </p:tab>
+
+                        <p:tab id="confirm" title="Confirmation">
+
+                            <style type="text/css">
+                                .mystyle .ui-datatable-empty-message {
+                                    color: red !important;
+                                }
+                            </style>
+
+                            <p:commandButton value="help" icon="pi pi-info-circle" action="#{votingWizard.showInfo()}" styleClass=" ui-button-outlined " />
+
+                            <p:panel header="Confirmation">
+                                <f:facet name="header">
+                                    <h:outputText rendered="#{!votingWizard.namesNotTaken()}" value="Your Event-name is already taken, please choose another" style="color: red" />
+                                    <h:outputText rendered="#{votingWizard.namesNotTaken()}" value="Your Events Name : #{votingWizard.name}" />
+                                </f:facet>
+
+                                <p:dataTable id="timeslotsTable2" var="timeslot" value="#{votingWizard.timeslots}" widgetVar="timeslotsTable2" emptyMessage="Please provide at least one timeslot" styleClass="mystyle">
+
+                                    <f:facet name="header" style="text-align: center">
+                                        <h:outputText value="Timeslots to vote for" style="text-align: center" />
+                                    </f:facet>
+
+                                    <p:column headerText="from">
+                                        <h:outputText value="#{timeslot.startString()}" />
+                                    </p:column>
+
+                                    <p:column headerText="To">
+                                        <h:outputText value="#{timeslot.endString()}" />
+                                    </p:column>
+
+                                </p:dataTable>
+
+                                <p>&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+                                <p:dataTable id="selectionTable" widgetVar="selectionTable" var="selection" value="#{votingWizard.selectedLocations}" emptyMessage="Please provide at least one restaurant" styleClass="mystyle">
+
+                                    <f:facet name="header">
+                                        <h:outputText value="Restaurants to vote for" />
+                                    </f:facet>
+
+                                    <p:column id="name" headerText="Name" sortBy="#{selection.name}" filterBy="#{selection.name}" filterMatchMode="contains">
+                                        <h:outputText value="#{selection.name}" />
+                                    </p:column>
+
+                                    <p:column headerText="Tags" filterBy="#{selection.tags}" filterFunction="#{tagFilterBean.filterByTag}">
+                                        <ui:repeat value="#{selection.tags}" var="tag">
+                                            <p:tag styleClass="p-mr-2" value="#{tag.name}" rounded="true"></p:tag>
+                                        </ui:repeat>
+                                    </p:column>
+
+                                    <p:column headerText="Opening Hours" filterBy="#{selection.openingHours}" filterFunction="#{timeFilterBean.filterOpenTime}">
+
+                                        <f:facet name="filter">
+                                            <p:datePicker value="#{timeFilterBean.start}" onchange="PF('selectionTable').filter()" pattern="dd/MM/yyyy  HH:mm" stepMinute="15" />
+                                        </f:facet>
+
+                                        <ui:repeat value="#{selection.openingHours}" var="openingHour">
+                                            <p:outputPanel rendered="#{openingHour.opened}">
+                                                <strong>
+                                                    <h:outputText value="#{openingHour.weekday}: " />
+                                                </strong>
+                                                <h:outputText value="#{openingHour.open} - " />
+                                                <h:outputText value="#{openingHour.close}" /><br />
+                                            </p:outputPanel>
+                                        </ui:repeat>
+                                    </p:column>
+
+                                    <p:column headerText="until" filterBy="#{selection.openingHours}" filterFunction="#{timeFilterBean.filterCloseTime}">
+                                        <f:facet name="filter">
+                                            <p:datePicker value="#{timeFilterBean.end}" onchange="PF('selectionTable').filter()" pattern="HH:mm" stepMinute="15" />
+                                        </f:facet>
+                                    </p:column>
+
+                                    <p:column headerText="Menu">
+                                        <h:outputLink value="#{selection.url}">View the menu</h:outputLink>
+                                    </p:column>
+
+                                    <p:column headerText="Map" style="width:100px;text-align: center">
+                                        <p:commandButton update=":locationShowMap" oncomplete="PF('locationShowMap').show()" icon="pi pi-map-marker" title="Map" actionListener="#{locationDetailController.setLocation(selection)}" />
+                                    </p:column>
+
+                                </p:dataTable>
+                            </p:panel>
+
+                            <p:commandButton rendered="#{votingWizard.selectedLocations.size() > 0 and votingWizard.timeslots.size() > 0 and votingWizard.namesNotTaken()}" id="SubmitButton" widgetVar="SubmitButton" value="Submit" action="#{votingWizard.doSaveVoting()}" onsuccess="PF('wizard').loadStep('tab0', false); PF('wizardDialog').hide()"
+                                update=":votingListForm:votingListTable">
+                                <p:autoUpdate />
+                            </p:commandButton>
+
+                            <p>&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+                        </p:tab>
+                    </p:wizard>
+
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Vote for #{votingDetailController.voting.name}" id="votingDialog" widgetVar="votingDialog" width="80%" height="80vh" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+
+            <h:form id="votingDialogForm">
+
+                <!-- <p:barChart model="#{votingDetailController.barModelTime}" style="width: 100%; height: 500px;" /> -->
+
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+                <p:dataTable id="rateTableTimeslot" widgetVar="rateTableTimeslot" var="timeslot" value="#{votingDetailController.voting.timeslots}" draggableRows="true" emptyMessage="No specific time">
+                    <p:ajax event="rowReorder" listener="#{votingDetailController.timeslotRanking}" update=":msgs" />
+                    <p:autoUpdate />
+
+                    <f:facet name="header">
+                        <h:outputText value="Vote for Timeslots by drag and drop them into order" />
+                    </f:facet>
+
+                    <p:column headerText="Points">
+                        <h:outputText value="#{votingDetailController.voting.timeslots.size() - votingDetailController.voting.timeslots.indexOf(timeslot)}" />
+                    </p:column>
+
+                    <p:column headerText="Start">
+                        <h:outputText value="#{timeslot.startString()}" />
+                    </p:column>
+
+                    <p:column headerText="End">
+                        <h:outputText value="#{timeslot.endString()}" />
+                    </p:column>
+
+                </p:dataTable>
+
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+                <!-- <p:barChart model="#{votingDetailController.barModelLocation}" style="width: 100%; height: 500px;" /> -->
+
+                <p:dataTable id="rateTableLocation" widgetVar="rateTableLocation" var="location" value="#{votingDetailController.voting.possibilities}" draggableRows="true" emptyMessage="No specific restaurant">
+                    <p:ajax event="rowReorder" listener="#{votingDetailController.locationRanking}" update=":msgs" />
+                    <p:autoUpdate />
+
+                    <f:facet name="header">
+                        <h:outputText value="Vote for Restaurants by drag and drop them into order" />
+                    </f:facet>
+
+                    <p:column headerText="Points">
+                        <h:outputText value="#{votingDetailController.voting.possibilities.size() - votingDetailController.voting.possibilities.indexOf(location)}" />
+                    </p:column>
+
+                    <p:column headerText="Name">
+                        <h:outputText value="#{location.name}" />
+                    </p:column>
+
+                    <p:column headerText="Tags" style="width:40%;text-align: left">
+                        <ui:repeat value="#{location.tags}" var="tag">
+                            <p:tag styleClass="p-mr-2" value="#{tag.name}" rounded="true"></p:tag>
+                        </ui:repeat>
+                    </p:column>
+
+                    <p:column headerText="Menu">
+                        <h:outputLink value="#{location.url}">View the menu</h:outputLink>
+                    </p:column>
+
+                    <p:column headerText="Map" style="text-align: center">
+                        <p:commandButton update=":locationShowMap" oncomplete="PF('locationShowMap').show()" icon="pi pi-map-marker">
+                            <f:setPropertyActionListener value="#{location}" target="#{locationDetailController.location}" />
+                        </p:commandButton>
+                    </p:column>
+
+                </p:dataTable>
+
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+                <p:commandButton value="Vote" action="#{votingDetailController.save()}" oncomplete="PF('votingDialog').hide()" />
+                <p:commandButton value="Abort" onclick="PF('votingDialog').hide()" styleClass="ui-button-outlined" />
+
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+                <p:dataTable id="votedTimeSum" widgetVar="votedTimeSum" var="vote" value="#{votingDetailController.voting.currentVotingStatusForTime()}" emptyMessage="No votes yet">
+
+                    <f:facet name="header">
+                        <h:outputText value="Current Voting Status for Restaurants" />
+                    </f:facet>
+
+                    <p:column headerText="From">
+                        <h:outputText value="#{vote.timeslot.startString()}" />
+                    </p:column>
+
+                    <p:column headerText="To">
+                        <h:outputText value="#{vote.timeslot.endString()}" />
+                    </p:column>
+
+                    <p:column headerText="Points">
+                        <h:outputText value="#{vote.weight}" />
+                    </p:column>
+
+                </p:dataTable>
+
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+                <p:dataTable id="votedLocationSum" widgetVar="votedLocationSum" var="vote" value="#{votingDetailController.voting.currentVotingStatusForLocations()}" emptyMessage="No votes yet">
+
+                    <f:facet name="header">
+                        <h:outputText value="Current Voting Status for Timeslots" />
+                    </f:facet>
+
+                    <p:column headerText="Restaurant">
+                        <h:outputText value="#{vote.location.name}" />
+                    </p:column>
+
+                    <p:column headerText="Points">
+                        <h:outputText value="#{vote.weight}" />
+                    </p:column>
+
+                </p:dataTable>
+
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Set Participants of #{votingDetailController.voting.name}" id="inviteDialog" widgetVar="inviteDialog" width="80%" height="80vh" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+
+            <h:form id="inviteDialogForm">
+
+                <p:commandButton value="help" icon="pi pi-info-circle" action="#{votingWizard.showInfoInvite()}" styleClass=" ui-button-outlined " />
+
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+                <p:outputPanel header="Participants">
+
+                    <p:dataTable id="usersTable" widgetVar="inviteTable" var="user" value="#{userListController.activeUsers}" filteredValue="#{userListController.filteredUsers}" selection="#{votingDetailController.selectedUsers}" rowKey="#{user.username}" update=":inviteForm:usersTable">
+
+                        <p:column headerText="Username" filterBy="#{user.username}" filterMatchMode="contains">
+                            <h:outputText value="#{user.username}" />
+                        </p:column>
+                        <p:column headerText="First Name" filterBy="#{user.firstName}" filterMatchMode="contains">
+                            <h:outputText value="#{user.firstName}" />
+                        </p:column>
+                        <p:column headerText="Last Name" filterBy="#{user.lastName}" filterMatchMode="contains">
+                            <h:outputText value="#{user.lastName}" />
+                        </p:column>
+
+                        <p:column selectionMode="multiple" />
+
+                    </p:dataTable>
+
+                    <p>&nbsp;&nbsp;&nbsp;&nbsp;</p>
+
+                    <p:outputPanel>
+                        <h:panelGrid columns="2">
+
+                            <p:commandButton value="Invite" action="#{votingDetailController.inviteSelected()}" oncomplete="  PF( 'inviteTable' ).unselectAllRows(); PF( 'inviteDialog' ).hide(); " update=":votingListForm:votingListTable ">
+                                <f:setPropertyActionListener value="#{votingDetailController.selectedUsers}" target="#{votingDetailController.selectedUsers}" />
+                            </p:commandButton>
+
+                            <p:commandButton value=" Abort " onclick=" PF( 'inviteDialog' ).hide() " styleClass=" ui-button-outlined " />
+
+                        </h:panelGrid>
+                    </p:outputPanel>
+
+                </p:outputPanel>
+
+            </h:form>
+
+        </p:dialog>
+
+        <p:dialog header="Map" id="locationShowMap" widgetVar="locationShowMap" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <p:outputPanel>
+                <iframe width="650" height="450" frameborder="0" style="border:0" src="https://www.google.com/maps/embed/v1/search?key=AIzaSyCjiJ065Z_F71B0JuIdXE_PFjxybifxk1U&amp;q=#{locationDetailController.location.name}+#{locationDetailController.location.street}+#{locationDetailController.location.city}">
+                </iframe>
+            </p:outputPanel>
+        </p:dialog>
+
+        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" width="300">
+            <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="pi pi-times" />
+        </p:confirmDialog>
+
+    </ui:define>
+
+</ui:composition>

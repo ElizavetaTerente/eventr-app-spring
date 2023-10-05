@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3c.org/1999/xhtml" xmlns:f="http://java.sun.com/jsf/core" xmlns:h="http://java.sun.com/jsf/html" xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:p="http://primefaces.org/ui" template="/WEB-INF/templates/main.xhtml">
+    <ui:define name="content">
+    <div id="div1">
+        <h:form id="userForm">
+            <p:dataTable id="usersTable" var="user" value="#{userListController.users}">
+                <f:facet name="header">
+                    <div class="p-d-flex p-ai-center p-jc-between">
+                        <div>
+                            <p:commandButton value="Add" process="@this" update="@form" resetValues="true"  oncomplete="PF('userEditDialog').show();" title="Add" styleClass="ui-button-outlined" rendered="#{sessionInfoBean.hasRole('ADMIN') or sessionInfoBean.hasRole('MANAGER')}">
+                                <f:setPropertyActionListener value="add" target="#{userDetailController.mode}" />
+                            </p:commandButton>
+                        </div>
+                    </div>
+                </f:facet>
+
+                <p:column headerText="Username" sortBy="#{user.username}" filterBy="#{user.username}" filterMatchMode="contains">
+                    <h:outputText value="#{user.username}" />
+                </p:column>
+                <p:column headerText="First Name" sortBy="#{user.firstName}" filterBy="#{user.firstName}" filterMatchMode="contains">
+                    <h:outputText value="#{user.firstName}" />
+                </p:column>
+                <p:column headerText="Last Name" sortBy="#{user.lastName}" filterBy="#{user.lastName}" filterMatchMode="contains">
+                    <h:outputText value="#{user.lastName}" />
+                </p:column>
+                <p:column headerText="Roles">
+                    <h:outputText value="#{user.roles}" />
+                </p:column>
+                <p:column headerText="Enabled">
+                    <p:toggleSwitch value="#{user.enabled}" rendered="#{user.username ne 'system' and user ne sessionInfoBean.currentUser}">
+                        <p:ajax listener="#{userDetailController.toggleEnabled(user)}" />
+                    </p:toggleSwitch>
+                </p:column>
+                <p:column style="width:100px;text-align: center">
+                    <p:commandButton rendered="#{user.username ne 'system'}" process="@this" update="@form" resetValues="true"  oncomplete="PF('userEditDialog').show()" icon="pi pi-user-edit" title="Edit">
+                        <f:setPropertyActionListener value="#{user}" target="#{userDetailController.user}" />
+                        <f:setPropertyActionListener value="edit" target="#{userDetailController.mode}" />
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+
+            <p:dialog header="#{userDetailController.mode} User" id="userEditDialog" widgetVar="userEditDialog" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+                <p:outputPanel id="userData" rendered="#{not empty userDetailController.user}">
+                    <h:panelGrid columns="1">
+                        <p:outputLabel for="username" value="Username: " />
+                        <p:inputText id="username" validator="#{userNameValidator.validate}" value="#{userDetailController.user.username}" requiredMessage="Please enter username" required="true" disabled="#{userDetailController.mode.equals('edit')}" />
+                        <p:message id="nameMsg" for="username"/>
+                        <p:outputLabel for="password" value="Password: "/>
+                        <p:password id="password" value="#{userDetailController.user.password}" required="true" disabled="#{userDetailController.mode.equals('edit')}" />
+                    </h:panelGrid>
+                    <p:separator />
+                    <h:panelGrid columns="2">
+                        <p:outputLabel for="firstName" value="First Name: "/>
+                        <p:inputText id="firstName" value="#{userDetailController.user.firstName}" required="true"/>
+                        <p:outputLabel for="firstName" value="Last Name: "/>
+                        <p:inputText id="lastName" value="#{userDetailController.user.lastName}" required="true" />
+                        <p:outputLabel for="email" value="E-Mail: " />
+                        <p:inputText id="email" value="#{userDetailController.user.email}" required="true" />
+                        <p:outputLabel for="roles" value="Roles: " />
+                        <p:selectManyCheckbox id="roles" value="#{userDetailController.selectedRoles}">
+                            <f:selectItems value="#{userDetailController.availableRoles}" var="role" itemLabel="#{role}" itemValue="#{role}" />
+                        </p:selectManyCheckbox>
+                        <p:outputLabel for="phone" value="Phone: " />
+                        <p:inputMask id="phone" value="#{userDetailController.user.phone}" mask="+99? 999 9999999" />
+                    </h:panelGrid>
+                    <p:separator />
+                    <h:panelGrid columns="3">
+                        <p:commandButton value="Save" validateClient="true" ajax="true"  action="#{userDetailController.doSaveUser()}" update=":userForm:usersTable :userForm:userData" />
+                        <p:commandButton value="Reload" action="#{userDetailController.doReloadUser()}" update=":userForm:userData" />
+                        <p:commandButton value="Abort" onclick="PF('userEditDialog').hide()" />
+                    </h:panelGrid>
+                </p:outputPanel>
+            </p:dialog>
+
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" width="300">
+                <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="pi pi-times" />
+            </p:confirmDialog>
+
+        </h:form>
+        </div>
+    </ui:define>
+</ui:composition>

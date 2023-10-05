@@ -1,0 +1,90 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:f="http://java.sun.com/jsf/core" xmlns:h="http://java.sun.com/jsf/html" xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:ng="http://xmlns.jcp.org/jsf/passthrough" xmlns:p="http://primefaces.org/ui" xmlns:o="http://omnifaces.org/ui"
+    xml:lang="en">
+
+<body>
+    <div id="div1">
+        <h:form id="futureEventForm">
+            <h5>Upcoming</h5>
+            <p:dataTable id="eventTableFuture" var="event" value="#{futureEventListController.getFutureEvents(sessionInfoBean.getCurrentUser())}">
+                <p:column headerText="Name" sortBy="#{event.name}" filterBy="#{event.name}" filterMatchMode="contains">
+                    <h:outputText value="#{event.name}" />
+                </p:column>
+
+                <p:column headerText="Start">
+                    <h:outputText value="#{event.startString}" />
+                </p:column>
+
+                <p:column headerText="End">
+                    <h:outputText value="#{event.endString}" />
+                </p:column>
+
+                <p:column headerText="Details">
+                    <p:commandButton update=":showEvent" oncomplete="PF('showEvent').show()" icon="pi pi-search" title="Details">
+                        <f:setPropertyActionListener value="#{event}" target="#{eventDetailController.event}" />
+                    </p:commandButton>
+                </p:column>
+
+                <p:column headerText="Sign Out" style="width:100px;text-align: center">
+                    <p:commandButton process="futureEventForm" value="sign out" action="#{eventDetailController.signOut()}" update=":futureEventForm:eventTableFuture" actionListener="#{eventDetailController.setEvent(event)}">
+                        <p:confirm header="Confirmation" message="Are you sure that you want to leave this event? You cannot rejoin." icon="ui-icon-alert" />
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+
+        </h:form>
+
+
+
+        <p:dialog header="#{eventDetailController.event.name}" id="showEvent" widgetVar="showEvent" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+
+            <div id="div1">
+                <div class="card">
+                    <p:column headerText="Location" value="Location:">
+                        <h:outputText value="&nbsp;Location" />
+                        <br />
+                        <h:outputText value="&nbsp;Name: #{eventDetailController.event.location.name}" />
+                        <br />
+                        <h:outputText value="&nbsp;Street: #{eventDetailController.event.location.street}" />
+                        <br />
+                        <h:outputText value="&nbsp;Summary: #{eventDetailController.event.location.description} &nbsp;" />
+                        <br />
+                        <h:outputLink value="#{eventDetailController.event.location.url}">&nbsp;View Menu</h:outputLink>
+                    </p:column>
+                </div>
+            </div>
+            <p:divider />
+
+            <div id="div1">
+                <p:column headerText="Start">
+                    <h:outputText value="Start: #{eventDetailController.event.startString}" />
+                </p:column>
+            </div>
+            <br />
+            <div id="div1">
+                <p:column headerText="End">
+                    <h:outputText value="End: #{eventDetailController.event.endString}" />
+                </p:column>
+            </div>
+            <br />
+            <div id="div1">
+                <p:column headerText="Participants">
+                    <h:outputText value="Participants: #{eventDetailController.event.numParticipants}" />
+                </p:column>
+            </div>
+
+            <!-- start, end, createUser, participants -->
+        </p:dialog>
+
+
+        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" width="300">
+            <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="pi pi-times" />
+        </p:confirmDialog>
+
+    </div>
+</body>
+
+</html>

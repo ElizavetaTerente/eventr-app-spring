@@ -1,0 +1,11 @@
+/bin/
+/target/
+<<<<<<< HEAD
+/.idea/
+=======
+/.idea
+>>>>>>> dev2
+/.classpath
+/.settings/
+/.project
+/src/main/webapp/WEB-INF/.faces-config.xml.jsfdia

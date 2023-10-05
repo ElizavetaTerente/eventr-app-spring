@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	template="/WEB-INF/templates/main.xhtml">
+	<ui:define name="content">
+	<div id="div1">
+		<h:form id="tagForm">
+			<p:dataTable id="tagTable" var="tag" value="#{tagListController.tags}">
+
+				<f:facet name="header">
+					<div class="p-d-flex p-ai-center p-jc-between">
+						<div>
+							<p:commandButton value="Add" process="@this" update="@form" resetValues="true"  oncomplete="PF('tagEditDialog').show();" title="Add" styleClass="ui-button-outlined" rendered="#{sessionInfoBean.hasRole('ADMIN') or sessionInfoBean.hasRole('MANAGER')}">
+								<f:setPropertyActionListener value="add" target="#{tagDetailController.mode}" />
+							</p:commandButton>
+						</div>
+					</div>
+				</f:facet>
+
+				<p:column headerText="Name" sortBy="#{tag.name}" filterBy="#{tag.name}">
+					<h:outputText value="#{tag.name}" />
+				</p:column>
+
+				<p:column headerText="Created By">
+					<h:outputText value="#{tag.createUser.username}" />
+				</p:column>
+
+				<p:column style="width:100px;text-align: center">
+					<p:commandButton action="#{tagDetailController.doDeleteTag}" icon="pi pi-trash" title="Delete" update=":tagForm:tagTable">
+						<f:setPropertyActionListener value="#{tag}" target="#{tagDetailController.tag}" />
+						<p:confirm header="Confirmation" message="Are you sure that you want to delete this user? You cannot undo this operation." icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+
+			</p:dataTable>
+
+			<p:dialog header="#{tagDetailController.mode} Tag" id="tagEditDialog" widgetVar="tagEditDialog" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+				<p:outputPanel id="tagData" rendered="#{not empty tagDetailController.tag}">
+					<p:outputPanel style="margin-bottom: 20px;">
+					<h:panelGrid columns="1" cellpadding="5px" cellspacing="3px">
+						<p:outputLabel for="name" value="Name: " />
+						<p:inputText id="name" value="#{tagDetailController.tag.name}" requiredMessage="Please enter name for tag" validator="#{tagNameValidator.validate}" required="true" />
+						<p:message id="nameMsg" for="name"/>
+					</h:panelGrid>
+					</p:outputPanel>
+					<h:panelGrid columns="3">
+						<p:commandButton value="Save" validateClient="true" ajax="true" action="#{tagDetailController.doSaveTag()}" update=":tagForm:tagTable :tagForm:tagData"/>
+						<p:commandButton value="Reload" action="#{tagDetailController.doReloadTag()}" update=":tagForm:tagData"/>
+						<p:commandButton value="Abort" onclick="PF('tagEditDialog').hide()"/>
+					</h:panelGrid>
+				</p:outputPanel>
+			</p:dialog>
+
+
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade"
+				width="300">
+				<p:commandButton value="Yes" type="button"
+					styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+				<p:commandButton value="No" type="button"
+					styleClass="ui-confirmdialog-no" icon="pi pi-times" />
+			</p:confirmDialog>
+
+
+		</h:form>
+		</div>
+	</ui:define>
+</ui:composition>

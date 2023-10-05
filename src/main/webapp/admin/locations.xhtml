@@ -1,0 +1,106 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3c.org/1999/xhtml" xmlns:f="http://java.sun.com/jsf/core" xmlns:h="http://java.sun.com/jsf/html" xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:p="http://primefaces.org/ui" template="/WEB-INF/templates/main.xhtml">
+    <ui:define name="content">
+        <div id="div1">
+            <h:form id="locationForm">
+                <p:dataTable id="locationTable" var="location" value="#{locationListController.locations}">
+
+                    <f:facet name="header">
+                        <div class="p-d-flex p-ai-center p-jc-between">
+                            <div>
+                                <p:commandButton value="Add" process="@this" update="@form" resetValues="true" oncomplete="PF('locationEditDialog').show();" title="Add" styleClass="ui-button-outlined" rendered="#{sessionInfoBean.hasRole('ADMIN') or sessionInfoBean.hasRole('MANAGER')}">
+                                    <f:setPropertyActionListener value="add" target="#{locationDetailController.mode}" />
+                                </p:commandButton>
+                            </div>
+                        </div>
+                    </f:facet>
+
+                    <p:column headerText="Name" sortBy="#{location.name}" filterBy="#{location.name}" filterMatchMode="contains">
+                        <h:outputText value="#{location.name}" />
+                    </p:column>
+
+                    <p:column headerText="Tags" filterBy="#{location.tags}" filterFunction="#{tagFilterBean.filterByTag}">
+                        <ui:repeat value="#{location.tags}" var="tag">
+                            <p:tag styleClass="p-mr-2" value="#{tag.name}" rounded="true"></p:tag>
+                        </ui:repeat>
+                    </p:column>
+
+                    <p:column headerText="Opening Hours">
+                        <ui:repeat value="#{location.openingHours}" var="openingHour">
+                            <p:outputPanel rendered="#{openingHour.opened}">
+                                <strong>
+                                    <h:outputText value="#{openingHour.weekday}: " />
+                                </strong>
+                                <h:outputText value="#{openingHour.open} - " />
+                                <h:outputText value="#{openingHour.close}" /><br />
+                            </p:outputPanel>
+                        </ui:repeat>
+                    </p:column>
+
+                    <p:column headerText="Status">
+                        <p:toggleSwitch value="#{location.active}">
+                            <p:ajax listener="#{locationDetailController.toggleActive(location)}" />
+                        </p:toggleSwitch>
+                    </p:column>
+
+                    <p:column style="width:100px;text-align: center">
+                        <p:commandButton process="@this" update="@form" resetValues="true"  oncomplete="PF('locationEditDialog').show()" icon="pi pi-user-edit" title="Edit">
+                            <f:setPropertyActionListener value="#{location}" target="#{locationDetailController.location}" />
+                            <f:setPropertyActionListener value="edit" target="#{locationDetailController.mode}" />
+                        </p:commandButton>
+                    </p:column>
+
+                </p:dataTable>
+
+                <p:dialog header="#{locationDetailController.mode} Restaurant" height="80vh" id="locationEditDialog" widgetVar="locationEditDialog" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+                    <p:outputPanel id="locationData" rendered="#{not empty locationDetailController.location}">
+                        <h:panelGrid columns="1" cellpadding="5px" cellspacing="3px">
+                            <p:outputLabel for="name" value="Name: " />
+                            <p:inputText id="name" validator="#{locationNameValidator.validate}" widht="100%" required="true" requiredMessage="Please enter location's name" value="#{locationDetailController.location.name}" disabled="#{locationDetailController.mode.equals('edit')}"/>
+                            <p:message id="nameMsg" for="name"/>
+                            <p:outputLabel for="description" value="Description: " />
+                            <p:inputTextarea id="description" rows="6" value="#{locationDetailController.location.description}" required="true" />
+                            <p:outputLabel for="menu" value="Speisekarte: " />
+                            <p:inputText id="menu" value="#{locationDetailController.location.url}" />
+                            <p:outputLabel value="Tags: " />
+                            <p:autoComplete id="tags" multiple="true" value="#{locationDetailController.location.tags}"
+                                            completeMethod="#{locationDetailController.completeTag}"
+                                            var="tag" itemLabel="#{tag.name}" itemValue="#{tag}"
+                                            converter="#{tagConverter}" forceSelection="true" scrollHeight="250">
+                                <p:column>
+                                    <h:outputText style="vertical-align: middle; margin-left: .5rem" value="#{tag.name}"/>
+                                </p:column>
+                            </p:autoComplete>
+                            <p:outputLabel for="street" value="Street: " />
+                            <p:inputText id="street" required="true" value="#{locationDetailController.location.street}" />
+                            <p:outputLabel for="city" value="City: " />
+                            <p:inputText id="city" required="true" value="#{locationDetailController.location.city}" />
+                        </h:panelGrid>
+
+                        <ui:repeat var="weekday" value="#{locationDetailController.location.openingHours}">
+                            <h:panelGrid columns="3">
+                                <p:selectBooleanCheckbox value="#{weekday.opened}" itemLabel="#{weekday.weekday}" />
+                                <p:datePicker value="#{weekday.open}" pattern="HH:mm" timeOnly="true" stepMinute="15" />
+                                <p:datePicker value="#{weekday.close}" pattern="HH:mm" timeOnly="true" stepMinute="15" />
+                            </h:panelGrid>
+                        </ui:repeat>
+
+                        <h:panelGrid columns="3">
+                            <p:commandButton value="Save" validateClient="true" ajax="true" action="#{locationDetailController.doSaveLocation()}" update=":locationForm:locationTable :locationForm:locationData" />
+                            <p:commandButton value="Reload" action="#{locationDetailController.doReloadLocation()}" update=":locationForm:locationData" />
+                            <p:commandButton value="Abort" onclick="PF('locationEditDialog').hide()" />
+                        </h:panelGrid>
+                    </p:outputPanel>
+                </p:dialog>
+
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" width="300">
+                    <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="pi pi-times" />
+                </p:confirmDialog>
+
+            </h:form>
+        </div>
+    </ui:define>
+</ui:composition>

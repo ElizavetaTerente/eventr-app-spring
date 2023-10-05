@@ -1,0 +1,22 @@
+html, body {
+	background-size: cover;
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+}
+
+#div1 {
+	background-color: rgb(238, 202, 136);
+	border: 1px solid orange;
+	padding: 7px;
+	border-radius: 5px;
+}
+
+#content {
+	height: auto;
+	min-height: 80vh;
+	margin-bottom: 30px;
+}
+
+#footer {
+	padding-bottom: 20px;
+}

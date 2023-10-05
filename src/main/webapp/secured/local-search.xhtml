@@ -1,0 +1,67 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3c.org/1999/xhtml" xmlns:f="http://java.sun.com/jsf/core" xmlns:h="http://java.sun.com/jsf/html" xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:ng="http://xmlns.jcp.org/jsf/passthrough" xmlns:p="http://primefaces.org/ui"
+    xmlns:o="http://omnifaces.org/ui" template="/WEB-INF/templates/main.xhtml">
+
+    <ui:define name="content">
+        <div id="div1">
+            <h:form id="locationForm">
+
+                <p:dataTable id="locationTable" var="location" value="#{locationListController.activeLocations}" widgetVar="myTable" emptyMessage="Keine Restaurants gefunden" filteredValue="#{locationListController.filteredLocations}">
+
+                    <p:column headerText="Name" sortBy="#{location.name}" filterBy="#{location.name}" filterMatchMode="contains">
+                        <h:outputText value="#{location.name}" />
+                    </p:column>
+
+                    <p:column headerText="Tags" filterBy="#{location.tags}" filterFunction="#{tagFilterBean.filterByTag}">
+                        <ui:repeat value="#{location.tags}" var="tag">
+                            <p:tag styleClass="p-mr-2" value="#{tag.name}" rounded="true"></p:tag>
+                        </ui:repeat>
+                    </p:column>
+
+                    <p:column headerText="Opening Hours" filterBy="#{location.openingHours}" filterFunction="#{timeFilterBean.filterOpenTime}">
+
+                        <f:facet name="filter">
+                            <p:datePicker value="#{timeFilterBean.start}" onchange="PF('myTable').filter()" pattern="dd/MM/yyyy  HH:mm" stepMinute="15" />
+                        </f:facet>
+
+                        <ui:repeat value="#{location.openingHours}" var="openingHour">
+                            <p:outputPanel rendered="#{openingHour.opened}">
+                                <strong>
+                                    <h:outputText value="#{openingHour.weekday}: " />
+                                </strong>
+                                <h:outputText value="#{openingHour.open} - " />
+                                <h:outputText value="#{openingHour.close}" /><br />
+                            </p:outputPanel>
+                        </ui:repeat>
+                    </p:column>
+
+                    <p:column headerText="until" filterBy="#{location.openingHours}" filterFunction="#{timeFilterBean.filterCloseTime}">
+                        <f:facet name="filter">
+                            <p:datePicker value="#{timeFilterBean.end}" onchange="PF('myTable').filter()" pattern="HH:mm" stepMinute="15" />
+                        </f:facet>
+                    </p:column>
+
+                    <p:column headerText="Menu">
+                        <h:outputLink value="#{location.url}">View menu</h:outputLink>
+                    </p:column>
+
+                    <p:column headerText="Map" style="width:100px;text-align: center">
+                        <p:commandButton update=":locationForm:locationShowMap" oncomplete="PF('locationShowMap').show()" icon="pi pi-map-marker" title="Map" actionListener="#{locationDetailController.setLocation(location)}" />
+                    </p:column>
+
+                </p:dataTable>
+
+                <p:dialog header="Map" id="locationShowMap" widgetVar="locationShowMap" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+                    <p:outputPanel>
+                        <iframe width="650" height="450" frameborder="0" style="border:0" src="https://www.google.com/maps/embed/v1/search?key=AIzaSyCjiJ065Z_F71B0JuIdXE_PFjxybifxk1U&amp;q=#{locationDetailController.location.name}+#{locationDetailController.location.street}+#{locationDetailController.location.city}">
+                        </iframe>
+                    </p:outputPanel>
+                </p:dialog>
+
+            </h:form>
+        </div>
+    </ui:define>
+
+</ui:composition>

@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3c.org/1999/xhtml" xmlns:f="http://java.sun.com/jsf/core" xmlns:h="http://java.sun.com/jsf/html" xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:ng="http://xmlns.jcp.org/jsf/passthrough" xmlns:p="http://primefaces.org/ui"
+    xmlns:o="http://omnifaces.org/ui" template="/WEB-INF/templates/main.xhtml">
+    <ui:define name="content">
+        <div id="div1">
+            welcome to g4t2's EVENTR #{sessionInfoBean.currentUserName} 
+        </div>
+
+
+
+        <div class="ui-g">
+            <div class="ui-g-12 ui-md-6">
+                <div id="div1">
+                    <h5>Running Votings</h5>
+
+                    <h:form id="votingListForm">
+
+                        <p:dataTable id="votingListTable" var="voting" value="#{votingListController.getUserSpecificVotings()}" widgetVar="votingListTable" emptyMessage="No running votings found with given criteria">
+
+                            <p:column headerText="Event-Name">
+                                <h:outputText value="#{voting.name}" />
+                            </p:column>
+
+                            <p:column headerText="Invited Users">
+                                <ui:repeat value="#{voting.participants}" var="participant">
+                                    <p:tag styleClass="p-mr-2" value="#{participant.username}" rounded="true"></p:tag>
+                                </ui:repeat>
+                            </p:column>
+
+                            <p:column headerText="Restaurants">
+                                <ui:repeat value="#{voting.possibilities}" var="possibility">
+                                    <p:tag styleClass="p-mr-2" value="#{possibility.name}" rounded="true">
+                                    </p:tag>
+                                </ui:repeat>
+                            </p:column>
+
+                        </p:dataTable>
+                    </h:form>
+
+                </div>
+            </div>
+
+            <div id="upTable" class="ui-g-12 ui-md-6">
+                <ui:include src="/WEB-INF/includes/upTable.xhtml" />
+            </div>
+
+        </div>
+
+
+    </ui:define>
+</ui:composition>

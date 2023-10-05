@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3c.org/1999/xhtml"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:ng="http://xmlns.jcp.org/jsf/passthrough"
+	xmlns:p="http://primefaces.org/ui"
+	template="/WEB-INF/templates/main.xhtml">
+	<ui:define name="content">
+		<div class="ui-g">
+			<div id="upTable" class="ui-g-12 ui-md-6">
+				<ui:include src="/WEB-INF/includes/upTable.xhtml" />
+			</div>
+
+			<div id="pastTable" class="ui-g-12 ui-md-6">
+				<ui:include src="/WEB-INF/includes/pastTable.xhtml" />
+			</div>
+		</div>
+	</ui:define>
+</ui:composition>

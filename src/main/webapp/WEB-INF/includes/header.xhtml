@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui" xml:lang="en">
+    
+
+    
+    <body>
+        <ui:composition>
+            <style type="text/css">
+                .mystyle .ui-menuitem-text{ color: orange !important;}
+            </style>
+            <h:form rendered="#{sessionInfoBean.loggedIn}">
+                <p:menubar>
+                    <p:menuitem url="/secured/welcome.xhtml">
+                        <h:graphicImage value="${pageContext.request.contextPath}/resources/img/logo.png" height="30" />
+                    </p:menuitem>
+                    <p:menuitem value="Local-search" url="/secured/local-search.xhtml" style="#{view.viewId eq '/secured/local-search.xhtml' ? 'font-weight:bold' : ''}" />
+                    <p:menuitem value="Voting" url="/secured/voting.xhtml" style="#{view.viewId eq '/secured/voting.xhtml' ? 'font-weight:bold' : ''}"/>
+                    <p:menuitem value="Events/History" url="/secured/history.xhtml" style="#{view.viewId eq '/secured/history.xhtml' ? 'font-weight:bold' : ''}"/>
+                    <!-- Change visibility to Manager (Sobald Benutzer mit dieser Rolle existieren) -->
+                    <p:submenu styleClass="mystyle" label="Manage" rendered="#{sessionInfoBean.hasRole('ADMIN')}">
+                        <p:menuitem value="Manage Restaurants" url="/admin/locations.xhtml"/>
+                        <p:menuitem value="Manage Users"  url="/admin/users.xhtml" rendered="#{sessionInfoBean.hasRole('ADMIN')}"/>
+                        <!--  visibility to Manager -->
+                        <p:menuitem value="Manage Tags"  url="/admin/tags.xhtml" rendered="#{sessionInfoBean.hasRole('ADMIN')}"/>
+                    </p:submenu>
+                    <p:menuitem value="Logout" url="/logout"/>
+                    
+                </p:menubar>
+            </h:form>
+        </ui:composition>
+    </body>
+</html>
